@@ -12,7 +12,7 @@
             --success: #28a745; --danger: #dc3545;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
-            body { 
+        body { 
             background-color: #000;
             background-size: cover;
             background-position: center;
@@ -100,6 +100,7 @@
         .welcome-container { width: 95%; max-width: 450px; padding: 30px; }
         .form-control { width: 100%; padding: 12px; margin: 10px 0; border: 1px solid #ccc; border-radius: 8px; font-size: 1rem; font-weight: 500; }
         .btn-start { background: var(--caee-blue); color: white; border: none; width: 100%; padding: 15px; border-radius: 12px; font-weight: bold; cursor: pointer; font-size: 1.1rem; transition: transform 0.2s; }
+        .btn-start:disabled { background: #999 !important; cursor: not-allowed; }
         
         #quiz-screen { padding: 15px; display: none; grid-template-columns: 1fr 320px; gap: 20px; max-width: 1300px; margin: auto; }
         #quiz-content { padding: 25px; min-height: 400px; }
@@ -158,7 +159,32 @@
         .status-badge { display: inline-block; padding: 10px 40px; border-radius: 50px; color: white; font-weight: 800; margin-bottom: 25px; font-size: 1.2rem; }
         .disclaimer-box { background: rgba(255, 255, 255, 0.4); color: #d32f2f; padding: 18px; border-radius: 15px; font-weight: 800; font-size: 0.9rem; border: 1px dashed #d32f2f; margin: 20px 0; }
         
-        @media (max-width: 900px) { #quiz-screen { grid-template-columns: 1fr; } .timer-floating { font-size: 1.1rem; } }
+        @media (max-width: 900px) { 
+            #quiz-screen { 
+                grid-template-columns: 1fr; 
+                padding: 10px;
+                gap: 10px;
+            } 
+            #quiz-content { 
+                padding: 15px; 
+                min-height: auto; 
+                margin-bottom: 10px;
+            } 
+            .timer-floating { 
+                font-size: 1rem; 
+                padding: 6px 12px; 
+                top: 5px; 
+                right: 5px; 
+            }
+            #nav-grid {
+                grid-template-columns: repeat(5, 1fr);
+                gap: 5px;
+            }
+            #nav-grid div {
+                height: 35px !important;
+                font-size: 14px;
+            }
+        }
     </style>
 </head>
 <body oncontextmenu="return false">
@@ -196,11 +222,11 @@
                 <option value="96215627">VẬN HÀNH MÁY XÚC</option> 
                 <option value="1389423018">VẬN HÀNH MÁY RẢI</option> 
             </select>
-            <input type="text" id="studentName" placeholder="HỌ VÀ TÊN HỌC VIÊN" class="form-control" style="text-transform: uppercase;">
-            <input type="text" id="studentDOB" placeholder="Ngày sinh: (VD: 12/4/2000)" class="form-control">
+            <input type="text" id="studentName" placeholder="HỌ VÀ TÊN HỌC VIÊN" class="form-control" style="text-transform: uppercase;" autocomplete="off">
+            <input type="text" id="studentDOB" placeholder="Ngày sinh: (VD: 12/4/2000)" class="form-control" autocomplete="off">
             <div style="display: flex; gap: 10px; margin-bottom: 10px;">
                 <input type="text" id="khoaThi" value="Tháng 6/2026" class="form-control" style="flex: 1.5; background: #eee; font-weight: bold;" readonly>
-                <input type="password" id="maThi" placeholder="Mã thi" class="form-control" style="flex: 1;">
+                <input type="password" id="maThi" placeholder="Mã thi" class="form-control" style="flex: 1;" autocomplete="off">
             </div>
             <div style="display:flex; align-items:center; margin: 15px 0; justify-content: center; gap:10px; background: rgba(227, 242, 253, 0.8); padding: 10px; border-radius: 10px;">
                 <input type="checkbox" id="modeToggle" style="width:20px; height:20px; cursor: pointer;">
@@ -228,7 +254,7 @@
         </div>
         <div class="progress-container">
             <div class="progress-bar-bg"><div id="progress-fill"></div></div>
-            <div id="progress-text">0/30</div>
+            <div id="progress-text">0/25</div>
         </div>
     </div>
 
@@ -253,7 +279,7 @@
             </div>
             <div class="score-circle">
                 <span id="res-score">0</span>
-                <small>/ 30 câu</small>
+                <small>/ 25 câu</small>
             </div>
             <div id="res-badge" class="status-badge">0.0 ĐIỂM</div>
             <div id="res-disclaimer" class="disclaimer-box">
@@ -272,13 +298,13 @@
     const synth = window.speechSynthesis;
     let isVoiceEnabled = true;
 
-    // Hàm dừng đọc ngay lập tức
     function stopSpeaking() {
         synth.cancel();
-        document.getElementById('ai-waves').style.display = 'none';
+        if(document.getElementById('ai-waves')) {
+            document.getElementById('ai-waves').style.display = 'none';
+        }
     }
 
-    // Tắt/Mở giọng nói AI
     function toggleVoice() {
         isVoiceEnabled = !isVoiceEnabled;
         const btn = document.getElementById('toggle-voice-btn');
@@ -294,10 +320,9 @@
         }
     }
 
-    // AI đọc câu hỏi (Đã bỏ điều kiện modeToggle để đọc cả khi thi)
     function aiSpeakQuestion(qObj) {
         if (!isVoiceEnabled) return;
-        stopSpeaking(); // Dừng câu cũ trước khi đọc câu mới
+        stopSpeaking(); 
         
         const labels = ['A', 'B', 'C', 'D'];
         let textToRead = `Câu hỏi số ${currentQuestionIndex + 1}. ${qObj.question}. `;
@@ -307,13 +332,12 @@
 
         const utter = new SpeechSynthesisUtterance(textToRead);
         utter.lang = 'vi-VN';
-        utter.rate = 1.1; // Tăng tốc độ đọc lên một chút để học viên không phải đợi lâu
+        utter.rate = 1.1; 
         utter.onstart = () => { document.getElementById('ai-waves').style.display = 'flex'; };
         utter.onend = () => { document.getElementById('ai-waves').style.display = 'none'; };
         synth.speak(utter);
     }
 
-    // AI đọc giải thích (Chỉ khi ở chế độ ôn tập)
     function aiSpeakExplanation(qObj) {
         if (!document.getElementById('modeToggle').checked || !isVoiceEnabled) return;
         stopSpeaking();
@@ -382,12 +406,12 @@
             const result = await res.json();
             if(result.isValid) startQuiz(); 
             else { alert(result.message || "Mã thi sai!"); btn.disabled = false; btn.innerText = "VÀO THI NGAY ➔"; }
-        } catch(e) { alert("Lỗi kết nối!"); btn.disabled = false; }
+        } catch(e) { alert("Lỗi kết nối!"); btn.disabled = false; btn.innerText = "VÀO THI NGAY ➔"; }
     }
 
     function startQuiz() {
         document.getElementById('display-name').innerText = document.getElementById('studentName').value.toUpperCase();
-        selectedQuestions = allQuestions.sort(() => 0.5 - Math.random()).slice(0, 25); // Đã chuyển sang lấy ngẫu nhiên 25 câu
+        selectedQuestions = allQuestions.sort(() => 0.5 - Math.random()).slice(0, 25); 
         document.getElementById('start-screen').style.display = 'none';
         document.getElementById('ai-container').style.display = 'flex';
         document.getElementById('timer').style.display = 'block';
@@ -397,7 +421,7 @@
     }
 
     function showQuestion(idx) {
-        stopSpeaking(); // Dừng đọc ngay khi bấm chuyển câu (Lùi lại/Tiếp theo/Chọn số câu)
+        stopSpeaking(); 
         currentQuestionIndex = idx;
         const q = selectedQuestions[idx];
         const stored = studentAnswers.find(a => a.qIndex === idx);
@@ -409,7 +433,9 @@
         
         q.options.forEach((opt, i) => {
             let cls = stored && opt === stored.selected ? "selected" : "";
-            html += `<div class="option-item ${cls}" onclick="selectAns(${idx}, '${opt.replace(/'/g, "\\'")}')"><b>${labels[i]}.</b> ${opt}</div>`;
+            // Xử lý chuỗi an toàn cho sự kiện onclick
+            let safeOpt = opt.replace(/\\/g, '\\\\').replace(/'/g, "\\'");
+            html += `<div class="option-item ${cls}" onclick="selectAns(${idx}, '${safeOpt}')"><b>${labels[i]}.</b> ${opt}</div>`;
         });
 
         html += `<div id="explanation-box" style="${(isOnTap && stored) ? 'display:block' : 'display:none'}">
@@ -418,7 +444,7 @@
         
         html += `<div style="display:flex; justify-content:space-between; margin-top:20px; gap:15px;">
                     <button class="btn-start" style="background:var(--btn-blue); flex:1;" onclick="showQuestion(${idx-1})" ${idx===0?'disabled':''}>Lùi lại</button>
-                    <button class="btn-start" style="background:var(--btn-blue); flex:1;" onclick="showQuestion(${idx+1})" ${idx===29?'disabled':''}>Tiếp theo</button>
+                    <button class="btn-start" style="background:var(--btn-blue); flex:1;" onclick="showQuestion(${idx+1})" ${idx===24?'disabled':''}>Tiếp theo</button>
                  </div>`;
         document.getElementById('quiz-content').innerHTML = html;
         renderGrid();
@@ -428,7 +454,7 @@
 
     function selectAns(qIdx, ans) {
         if(isSubmitted) return;
-        stopSpeaking(); // Dừng đọc câu hỏi khi học viên đã chọn đáp án
+        stopSpeaking(); 
         const findIndex = studentAnswers.findIndex(a => a.qIndex === qIdx);
         if(findIndex > -1) studentAnswers[findIndex].selected = ans;
         else studentAnswers.push({qIndex: qIdx, selected: ans});
@@ -482,9 +508,10 @@
             const ans = studentAnswers.find(a => a.qIndex === i);
             if(ans && ['A','B','C','D'][q.options.indexOf(ans.selected)] === q.answer) score++;
         });
-// Chuyển đổi công thức tính điểm sang hệ 25 câu (mỗi câu 0.4 điểm)
-       const score10 = parseFloat((score * 0.4).toFixed(1));
-        const status = score10 >= 8.4 ? "ĐẠT" : "KHÔNG ĐẠT";
+
+        // Điểm hệ 10 = số câu đúng * 0.4. Điều kiện ĐẠT là từ mốc mốc đúng >= 21 câu (tương đương >= 8.4 điểm)
+        const score10 = parseFloat((score * 0.4).toFixed(1));
+        const status = score >= 21 ? "ĐẠT" : "KHÔNG ĐẠT";
         const jobName = document.getElementById('jobType').options[document.getElementById('jobType').selectedIndex].text;
         const isOnTap = document.getElementById('modeToggle').checked;
         
